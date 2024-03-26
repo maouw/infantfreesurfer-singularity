@@ -21,6 +21,10 @@ jobs:
       packages: write
 
     steps:
+      - name: Clear up space
+        run: |
+          set -eux -o pipefail
+          sudo rm -rf /opt/hostedtoolcache /usr/share/dotnet /usr/local/lib/android /usr/share/swift /usr/local/lib/android
       - name: Download Apptainer
         run: |
           set -eux -o pipefail
