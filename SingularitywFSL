@@ -15,24 +15,7 @@ From: ghcr.io/uw-psych/infantfreesurfer-singularity/infantfreesurfer:latest
 	export FSLREMOTECALL=""
 	export FSLGECUDAQ="cuda.q"
 
-%post
-	yum install -y -q \
-		ca-certificates \
-		cmake \
-		gcc-c++ \
-		git \
-		make
-	yum clean all
-	rm -rf /var/cache/yum/*
-	mkdir -p /tmp/niftyreg/build
-	git clone https://github.com/KCL-BMEIS/niftyreg /tmp/niftyreg/source
-	cd /tmp/niftyreg/build
-	cmake -DCMAKE_INSTALL_PREFIX=/opt/niftyreg-master -DBUILD_SHARED_LIBS=ON -DBUILD_TESTING=OFF /tmp/niftyreg/source
-	make -j1
-	make install
-	ldconfig
-	rm -rf /tmp/niftyreg
-	
+%post	
 	yum install -y -q \
 		bc \
 		curl \
