@@ -15,7 +15,8 @@ From: ghcr.io/uw-psych/infantfreesurfer-singularity/infantfreesurfer:latest
 	export FSLREMOTECALL=""
 	export FSLGECUDAQ="cuda.q"
 
-%post	
+%post
+    set -ex
 	yum install -y -q \
 		bc \
 		curl \
