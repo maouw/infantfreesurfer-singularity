@@ -1,0 +1,66 @@
+Bootstrap: oras
+From: ghcr.io/uw-psych/infantfreesurfer-singularity/infantfreesurfer:latest
+
+%environment
+	export PATH="/opt/niftyreg-master/bin:$PATH"
+	export LD_LIBRARY_PATH="/opt/niftyreg-master/lib:$LD_LIBRARY_PATH"
+	export FSLDIR="/opt/fsl-6.0.2"
+	export PATH="/opt/fsl-6.0.2/bin:$PATH"
+	export FSLOUTPUTTYPE="NIFTI_GZ"
+	export FSLMULTIFILEQUIT="TRUE"
+	export FSLTCLSH="/opt/fsl-6.0.2/bin/fsltclsh"
+	export FSLWISH="/opt/fsl-6.0.2/bin/fslwish"
+	export FSLLOCKDIR=""
+	export FSLMACHINELIST=""
+	export FSLREMOTECALL=""
+	export FSLGECUDAQ="cuda.q"
+
+%post
+	yum install -y -q \
+		ca-certificates \
+		cmake \
+		gcc-c++ \
+		git \
+		make
+	yum clean all
+	rm -rf /var/cache/yum/*
+	mkdir -p /tmp/niftyreg/build
+	git clone https://github.com/KCL-BMEIS/niftyreg /tmp/niftyreg/source
+	cd /tmp/niftyreg/build
+	cmake -DCMAKE_INSTALL_PREFIX=/opt/niftyreg-master -DBUILD_SHARED_LIBS=ON -DBUILD_TESTING=OFF /tmp/niftyreg/source
+	make -j1
+	make install
+	ldconfig
+	rm -rf /tmp/niftyreg
+	
+	yum install -y -q \
+		bc \
+		curl \
+		file \
+		libGL \
+		libGLU \
+		libICE \
+		libSM \
+		libX11 \
+		libXcursor \
+		libXext \
+		libXft \
+		libXinerama \
+		libXrandr \
+		libXt \
+		libgomp \
+		libjpeg \
+		libmng \
+		libpng12 \
+		nano \
+		openblas-serial \
+		sudo \
+		wget
+	yum clean all
+	rm -rf /var/cache/yum/*
+	echo "Downloading FSL ..."
+	mkdir -p /opt/fsl-6.0.2
+	curl -fL https://fsl.fmrib.ox.ac.uk/fsldownloads/fsl-6.0.2-centos6_64.tar.gz | tar -xz -C /opt/fsl-6.0.2 --strip-components 1
+	echo "Installing FSL conda environment ..."
+	bash /opt/fsl-6.0.2/etc/fslconf/fslpython_install.sh -f /opt/fsl-6.0.2
+
