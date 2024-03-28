@@ -9,7 +9,7 @@ From: centos:7
 
 %post
 	set -ex
-    
+
 	# Set up download directory
 	DOWNLOAD_DIR="{{DOWNLOAD_DIR}}"
 	mkdir -p "${DOWNLOAD_DIR}"
@@ -79,7 +79,7 @@ From: centos:7
 	FS_DOWNLOAD_PATH="${DOWNLOAD_DIR}/${FS_DOWNLOAD_FILE}"
 	
     cd "${DOWNLOAD_DIR}"
-    "${MAMBA_EXE}" run -n "${ENV_NAME}" aria2c --show-console-readout=false --summary-interval=60 -x=4 -s=2 --out="${FS_DOWNLOAD_FILE}" "${FS_DOWNLOAD_URL}"
+    "${MAMBA_EXE}" run -n "${ENV_NAME}" aria2c --show-console-readout=false --summary-interval=60 -x 4 -s 2 --out="${FS_DOWNLOAD_FILE}" "${FS_DOWNLOAD_URL}"
 	tar --no-same-owner -xzvf "${FS_DOWNLOAD_URL}"
     mv freesurfer /usr/local/
 	rm -f "${FS_DOWNLOAD_FILE}"
