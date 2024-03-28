@@ -36,3 +36,6 @@ jobs:
         uses: uw-psych/apptainer-actions/build-and-push@main
         with:
           deffile: Singularity
+          apptainer-tmpdir: ${{ github.workspace }}/apptainer-tmp
+          image-dir: ${{ github.workspace }}
+
