@@ -9,11 +9,7 @@ From: centos:7
 
 %post
 	set -ex
-	
-	# Install required packages
-    yum install epel-release -y -q
-	yum install -y -q aria2 curl tar bzip2
-	
+    
 	# Set up download directory
 	DOWNLOAD_DIR="{{DOWNLOAD_DIR}}"
 	mkdir -p "${DOWNLOAD_DIR}"
@@ -21,6 +17,8 @@ From: centos:7
 	# Set up dependencies
 	yum install -y -q \
 		bc \
+        bzip2 \
+        curl \
 		file \
 		install \
 		less \
@@ -44,6 +42,7 @@ From: centos:7
 		mesa-libGL \
 		openblas-serial \
 		perl \
+        tar \
 		tcsh \
 		unzip
 	
@@ -67,8 +66,9 @@ From: centos:7
 	curl -L "{{FSL_ENV_URL}}" -o "${DOWNLOAD_DIR}/fsl-env.yaml"
 	"${MAMBA_EXE}" install -y -n "${ENV_NAME}" -f "${DOWNLOAD_DIR}/fsl-env.yaml"
     "${MAMBA_EXE}" install -y -n "${ENV_NAME}" -c conda-forge conda
+    "${MAMBA_EXE}" install -y -n "${ENV_NAME}" -c conda-forge aria2
 	rm "${DOWNLOAD_DIR}/fsl-env.yaml"
-    "${MAMBA_EXE}" 
+    "${MAMBA_EXE}" clean -y --all --force-pkgs-dirs
 	
     # Show the current disk usage
     df -hT
@@ -79,7 +79,7 @@ From: centos:7
 	FS_DOWNLOAD_PATH="${DOWNLOAD_DIR}/${FS_DOWNLOAD_FILE}"
 	
     cd "${DOWNLOAD_DIR}"
-    aria2c --show-console-readout=false --summary-interval=60 -x=4 -s=2 --out="${FS_DOWNLOAD_FILE}" "${FS_DOWNLOAD_URL}"
+    "${MAMBA_EXE}" run -n "${ENV_NAME}" aria2c --show-console-readout=false --summary-interval=60 -x=4 -s=2 --out="${FS_DOWNLOAD_FILE}" "${FS_DOWNLOAD_URL}"
 	tar --no-same-owner -xzvf "${FS_DOWNLOAD_URL}"
     mv freesurfer /usr/local/
 	rm -f "${FS_DOWNLOAD_FILE}"
