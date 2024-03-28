@@ -21,10 +21,13 @@ jobs:
       packages: write
     steps:
       - name: Clear up space
-        uses: uw-psych/apptainer-actions/make-disk-space@main
+        uses: easimon/maximize-build-space@master
         with:
-            rm-apt-packages: 'true'
-            rm-apt-cache: 'true'
+            remove-dotnet: 'true'
+            remove-android: 'true'
+            remove-haskell: 'true'
+            remove-codeql: 'true'
+            remove-docker-images: 'true'
       - name: Install Apptainer
         uses: uw-psych/apptainer-actions/setup@main
       - name: Check out code for the container build
