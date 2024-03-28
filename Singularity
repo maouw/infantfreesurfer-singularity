@@ -17,8 +17,8 @@ From: centos:7
 	# Set up dependencies
 	yum install -y -q \
 		bc \
-        bzip2 \
-        curl \
+    bzip2 \
+    curl \
 		file \
 		install \
 		less \
