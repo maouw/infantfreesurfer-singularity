@@ -8,10 +8,6 @@ defaults:
   run:
     shell: bash
 
-env:
-  APPTAINER_VERSION: 1.2.5
-  ORAS_VERSION: 1.1.0
-
 jobs:
   build-and-push-image:
     runs-on: ubuntu-latest
