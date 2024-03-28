@@ -25,6 +25,8 @@ jobs:
             remove-codeql: 'true'
             remove-docker-images: 'true'
       - name: Install Apptainer
+        with:
+          apptainer-version: '1.2.5'
         uses: uw-psych/apptainer-actions/setup@main
       - name: Check out code for the container build
         uses: actions/checkout@v4
