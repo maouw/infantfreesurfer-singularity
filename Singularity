@@ -11,7 +11,8 @@ From: centos:7
 	set -ex
 	
 	# Install required packages
-	yum install -y -q curl tar bzip2
+    yum install epel-release -y -q
+	yum install -y -q aria2 curl tar bzip2
 	
 	# Set up download directory
 	DOWNLOAD_DIR="{{DOWNLOAD_DIR}}"
@@ -59,20 +60,31 @@ From: centos:7
 	mkdir -p "${MAMBA_ROOT_PREFIX}/conda-meta"
 	chmod -R a+rwx "${MAMBA_ROOT_PREFIX}"
 	
+    # Show the current disk usage
+    df -h
+
 	# Set up FSL
 	curl -L "{{FSL_ENV_URL}}" -o "${DOWNLOAD_DIR}/fsl-env.yaml"
-	"${MAMBA_EXE}" install -q -y -n "${ENV_NAME}" -f "${DOWNLOAD_DIR}/fsl-env.yaml"
-	"${MAMBA_EXE}" clean --all -y
+	"${MAMBA_EXE}" install -y -n "${ENV_NAME}" -f "${DOWNLOAD_DIR}/fsl-env.yaml"
+    "${MAMBA_EXE}" install -y -n "${ENV_NAME}" -c conda-forge conda
 	rm "${DOWNLOAD_DIR}/fsl-env.yaml"
 	
+    # Show the current disk usage
+    df -h
+
 	# Set up FreeSurfer
 	FS_DOWNLOAD_URL="{{FS_DOWNLOAD_URL}}"
 	FS_DOWNLOAD_FILE="{{FS_DOWNLOAD_FILE}}"
 	FS_DOWNLOAD_PATH="${DOWNLOAD_DIR}/${FS_DOWNLOAD_FILE}"
 	
-	curl -L --progress-bar "${FS_DOWNLOAD_URL}" -o "${FS_DOWNLOAD_PATH}"
-	tar --no-same-owner -xzvf "${FS_DOWNLOAD_PATH}" --directory=/usr/local/
-	rm -f "${FS_DOWNLOAD_PATH}"
+    cd "${DOWNLOAD_DIR}"
+    aria2 --show-console-readout=false --summary-interval=60 -x=4 -s=2 --out="${FS_DOWNLOAD_FILE}" "${FS_DOWNLOAD_URL}"
+	tar --no-same-owner -xzvf "${FS_DOWNLOAD_URL}"
+    mv freesurfer /usr/local/
+	rm -f "${FS_DOWNLOAD_FILE}"
+
+    # Show the current disk usage
+    df -h
 
 %environment
 	export SHELL="/bin/bash"
