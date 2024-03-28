@@ -80,7 +80,7 @@ From: centos:7
 	
     cd "${DOWNLOAD_DIR}"
     "${MAMBA_EXE}" run -n "${ENV_NAME}" aria2c --show-console-readout=false --summary-interval=60 -x 4 -s 2 --out="${FS_DOWNLOAD_FILE}" "${FS_DOWNLOAD_URL}"
-	tar --no-same-owner -xzvf "${FS_DOWNLOAD_URL}"
+	tar --no-same-owner -xzvf "${FS_DOWNLOAD_FILE}"
     mv freesurfer /usr/local/
 	rm -f "${FS_DOWNLOAD_FILE}"
 
