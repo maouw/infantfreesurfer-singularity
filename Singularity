@@ -1,52 +1,130 @@
 Bootstrap: docker
 From: centos:7
 
-
-%setup
-    # Invoke build with apptainer build --bind ${PWD}/dl:/dl if you want to use predownloaded freesurfer
-    mkdir -p ${APPTAINER_ROOTFS}/dl
+%arguments
+	DOWNLOAD_DIR=/.setup-downloads
+	FSL_ENV_URL=https://fsl.fmrib.ox.ac.uk/fsldownloads/fslconda/releases/fsl-6.0.7.2_linux-64.yml
+	FS_DOWNLOAD_URL=https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/infant/freesurfer-linux-centos7_x86_64-infant.tar.gz
+	FS_DOWNLOAD_FILE=fs-infant.tar.gz
 
 %post
-    set -ex
-    # install utils
-    yum -y update
-    yum -y install bc libgomp perl tar tcsh wget vim-common
-    yum -y install mesa-libGL libXext libSM libXrender libXmu
-    yum clean all
-    
-    # Use local freesurfer download if available
-    if [ -f "/dl/fs-infant.tar.gz" ]; then
-        echo "Using local freesurfer download"
-        USING_LOCAL_FS=1
-    else
-        wget https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/infant/freesurfer-linux-centos7_x86_64-infant.tar.gz -O /dl/fs-infant.tar.gz
-    fi
-
-    tar --no-same-owner -xzvf /dl/fs-infant.tar.gz --directory=/ && mv freesurfer /usr/local
-
-    if [ -z "${USING_LOCAL_FS:-}" ]; then
-        echo "Cleaning up local freesurfer download"
-        rm -f /dl/fs-infant.tar.gz
-    fi
+	set -ex
+	
+	# Install required packages
+	yum install -y -q curl tar bzip2
+	
+	# Set up download directory
+	DOWNLOAD_DIR="{{DOWNLOAD_DIR}}"
+	mkdir -p "${DOWNLOAD_DIR}"
+	
+	# Set up dependencies
+	yum install -y -q \
+		bc \
+		file \
+		install \
+		less \
+		libGL \
+		libGLU \
+		libgomp \
+		libICE \
+		libjpeg \
+		libmng \
+		libpng12 \
+		libSM \
+		libX11 \
+		libXcursor \
+		libXext \
+		libXft \
+		libXinerama \
+		libXmu \
+		libXrandr \
+		libXrender \
+		libXt \
+		mesa-libGL \
+		openblas-serial \
+		perl \
+		tcsh \
+		unzip
+	
+	# Clean up downloaded packages
+	yum clean all
+	
+	# Set up micromamba
+	export ENV_NAME="base"
+	export MAMBA_ROOT_PREFIX="/opt/conda"
+	export MAMBA_EXE="/bin/micromamba"
+	cd /
+	curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj bin/micromamba
+	chmod a+x "${MAMBA_EXE}"
+	mkdir -p "${MAMBA_ROOT_PREFIX}/conda-meta"
+	chmod -R a+rwx "${MAMBA_ROOT_PREFIX}"
+	
+	# Set up FSL
+	curl -L "{{FSL_ENV_URL}}" -o "${DOWNLOAD_DIR}/fsl-env.yaml"
+	"${MAMBA_EXE}" install -q -y -n "${ENV_NAME}" -f "${DOWNLOAD_DIR}/fsl-env.yaml"
+	"${MAMBA_EXE}" clean --all -y
+	rm "${DOWNLOAD_DIR}/fsl-env.yaml"
+	
+	# Set up FreeSurfer
+	FS_DOWNLOAD_URL="{{FS_DOWNLOAD_URL}}"
+	FS_DOWNLOAD_FILE="{{FS_DOWNLOAD_FILE}}"
+	FS_DOWNLOAD_PATH="${DOWNLOAD_DIR}/${FS_DOWNLOAD_FILE}"
+	
+	curl -L --progress-bar "${FS_DOWNLOAD_URL}" -o "${FS_DOWNLOAD_PATH}"
+	tar --no-same-owner -xzvf "${FS_DOWNLOAD_PATH}" --directory=/usr/local/
+	rm -f "${FS_DOWNLOAD_PATH}"
 
 %environment
-    # setup freesurfer env
-    export OS="Linux"
-    export PATH="/usr/local/freesurfer/bin:/usr/local/freesurfer/fsfast/bin:/usr/local/freesurfer/tktools:/usr/local/freesurfer/mni/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-    export FREESURFER_HOME="/usr/local/freesurfer"
-    export FREESURFER="/usr/local/freesurfer"
-    export FS_OVERRIDE="0"
-    export PERL5LIB="/usr/local/freesurfer/mni/share/perl5"
-    export LOCAL_DIR="/usr/local/freesurfer/local"
-    export FSFAST_HOME="/usr/local/freesurfer/fsfast"
-    export FMRI_ANALYSIS_DIR="/usr/local/freesurfer/fsfast"
-    export FSF_OUTPUT_FORMAT="nii.gz"
-    export MINC_BIN_DIR="/usr/local/freesurfer/mni/bin"
-    export SUBJECTS_DIR="/usr/local/freesurfer/subjects"
-    export FUNCTIONALS_DIR="/usr/local/freesurfer/sessions"
-    export MINC_LIB_DIR="/usr/local/freesurfer/mni/lib"
-    export MNI_DIR="/usr/local/freesurfer/mni"
-    export MNI_DATAPATH="/usr/local/freesurfer/mni/data"
-    export MNI_PERL5LIB="/usr/local/freesurfer/mni/share/perl5"
-    export FIX_VERTEX_AREA=""
-    export FSLOUTPUTTYPE="NIFTI_GZ"
+	export SHELL="/bin/bash"
+	
+	# Set up mamba/conda environment
+	export ENV_NAME="base"
+	export MAMBA_ROOT_PREFIX="/opt/conda"
+	export MAMBA_EXE="/bin/micromamba"
+	
+	export CONDA_DEFAULT_ENV="${ENV_NAME}"
+	export CONDA_PREFIX="${MAMBA_ROOT_PREFIX}"
+	export CONDA_PROMPT_MODIFIER="(base)"
+	export CONDA_SHLVL=1
+	export PATH="${CONDA_PREFIX}:${CONDA_PREFIX}/condabin:${PATH}"
+	export PS1="${CONDA_PROMPT_MODIFIER} ${PS1:->}"
+	
+	# Set up FSL environment
+	export FSLDIR="${MAMBA_ROOT_PREFIX}"
+	export FSLOUTPUTTYPE="NIFTI_GZ"
+	export FSLMULTIFILEQUIT="TRUE"
+	export FSLTCLSH="${FSLDIR}/bin/fsltclsh"
+	export FSLWISH="${FSLDIR}/bin/fslwish"
+	export FSLLOCKDIR=
+	export FSLMACHINELIST=
+	export FSLREMOTECALL=
+	export FSLGECUDAQ="cuda.q"
+	
+	# Set up FreeSurfer environment
+	export OS="Linux"
+	export FREESURFER_HOME="/usr/local/freesurfer"
+	export FREESURFER="${FREESURFER_HOME}"
+	export LOCAL_DIR="${FREESURFER_HOME}/local"
+	export MNI_DIR="/usr/local/freesurfer/mni"
+	export MNI_PERL5LIB="${MNI_DIR}/share/perl5"
+	export PERL5LIB="${MNI_PERL5LIB}"
+	export MINC_BIN_DIR="${MNI_DIR}/bin"
+	export MINC_LIB_DIR="${MNI_DIR}/lib"
+	export MNI_DATAPATH="${MNI_DIR}/data"
+	export FSFAST_HOME="${FREESURFER_HOME}/fsfast"
+	export FMRI_ANALYSIS_DIR="${FSFAST_HOME}"
+	export SUBJECTS_DIR="${FREESURFER_HOME}/subjects"
+	export FUNCTIONALS_DIR="${FREESURFER_HOME}/sessions"
+	export FS_OVERRIDE="0"
+	export FSF_OUTPUT_FORMAT="nii.gz"
+	export FIX_VERTEX_AREA=""
+	export FSLOUTPUTTYPE="NIFTI_GZ"
+	
+	export PATH="${FREESURFER_HOME}/bin:${FSFAST_HOME}/bin:${FREESURFER_HOME}/tktools:${MINC_BIN_DIR}:${PATH}"
+
+%runscript
+	#!/bin/bash
+	eval "$("${MAMBA_EXE}" shell hook --shell=bash)"
+	micromamba activate "${ENV_NAME:-base}"
+	exec "$@"
+
