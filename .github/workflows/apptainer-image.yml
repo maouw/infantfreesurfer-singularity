@@ -19,7 +19,6 @@ jobs:
     permissions:
       contents: write
       packages: write
-
     steps:
       - name: Clear up space
         uses: uw-psych/apptainer-actions/make-disk-space@main
